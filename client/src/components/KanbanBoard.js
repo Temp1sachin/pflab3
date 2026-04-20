@@ -17,6 +17,9 @@ const columns = ['ToDo', 'In Progress', 'Done'];
  */
 export default function KanbanBoard({ tasks, openId, setOpenId, onEdit }) {
   const dispatch = useDispatch();
+  const getTaskId = (t) => String(t?._id ?? t?.id ?? '');
+  const getAssigneeName = (t) => t?.assignee?.name ?? t?.assigneeName ?? 'unassigned';
+  const getCreatorName = (t) => t?.creator?.name ?? t?.creatorName ?? 'unknown';
 
   const onDragEnd = (result) => {
     const { draggableId, destination, source } = result;
@@ -54,10 +57,13 @@ export default function KanbanBoard({ tasks, openId, setOpenId, onEdit }) {
                 {tasks
                   .filter((t) => t.status === col)
                   .map((t, index) => {
+                    const taskId = getTaskId(t);
+                    if (!taskId) return null;
+
                     // Deadline highlight
                     const isDeadlineSoon = t.dueDate && (new Date(t.dueDate) - now < three) && (new Date(t.dueDate) - now > 0);
                     return (
-                      <Draggable draggableId={t._id} index={index} key={t._id}>
+                      <Draggable draggableId={taskId} index={index} key={taskId}>
                         {(prov) => (
                           <Paper
                             ref={prov.innerRef}
@@ -67,13 +73,13 @@ export default function KanbanBoard({ tasks, openId, setOpenId, onEdit }) {
                               p: 1.5,
                               mb: 1,
                               bgcolor: '#fafcff',
-                              border: openId === t._id ? '2px solid #1976d2' : '1px solid #ddd',
+                              border: openId === taskId ? '2px solid #1976d2' : '1px solid #ddd',
                               borderRadius: 2,
-                              boxShadow: openId === t._id ? 4 : 1,
+                              boxShadow: openId === taskId ? 4 : 1,
                               cursor: 'pointer',
                               transition: 'box-shadow 0.2s, border 0.2s',
                             }}
-                            onClick={() => setOpenId(openId === t._id ? null : t._id)}
+                            onClick={() => setOpenId(openId === taskId ? null : taskId)}
                           >
                             <Box display="flex" alignItems="center" justifyContent="space-between">
                               <Typography fontWeight={600} color="#205081">{t.title}</Typography>
@@ -93,14 +99,14 @@ export default function KanbanBoard({ tasks, openId, setOpenId, onEdit }) {
                                 mb: 0.5,
                               }}
                             />
-                            <Collapse in={openId === t._id} timeout="auto" unmountOnExit>
+                            <Collapse in={openId === taskId} timeout="auto" unmountOnExit>
                               <Box mt={1}>
                                 <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', mb: 1 }}>
                                   {t.description || '— no description —'}
                                 </Typography>
                                 <Box display="flex" gap={1} flexWrap="wrap">
-                                  <Chip label={`Assigned to: ${t.assignee?.name || 'unassigned'}`} size="small" />
-                                  <Chip label={`Assigned by: ${t.creator?.name || 'unknown'}`} size="small" />
+                                  <Chip label={`Assigned to: ${getAssigneeName(t)}`} size="small" />
+                                  <Chip label={`Assigned by: ${getCreatorName(t)}`} size="small" />
                                 </Box>
                               </Box>
                             </Collapse>

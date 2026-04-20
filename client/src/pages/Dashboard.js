@@ -26,6 +26,13 @@ export default function Dashboard() {
   const theme    = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
+  const getTaskId = (t) => String(t?._id ?? t?.id ?? '');
+  const getAssigneeId = (t) =>
+    String(t?.assignee?._id ?? t?.assignee?.id ?? t?.assigneeId ?? t?.assignee_id ?? t?.assignee ?? '');
+  const getCreatorId = (t) =>
+    String(t?.creator?._id ?? t?.creator?.id ?? t?.creatorId ?? t?.creator_id ?? t?.creator ?? '');
+  const getAssigneeName = (t) => t?.assignee?.name ?? t?.assigneeName ?? 'unassigned';
+  const getCreatorName = (t) => t?.creator?.name ?? t?.creatorName ?? 'unknown';
 
   /* ───────── derived user id ───────── */
   const userId = useMemo(() => {
@@ -57,9 +64,11 @@ export default function Dashboard() {
   const three = 3 * 24 * 60 * 60 * 1000;
 
   const filtered = tasks.filter((t) => {
+    const currentUserId = String(userId || '');
+
     /* bucket filter */
-    if (bucket === 'toMe' && t.assignee?._id !== userId) return false;
-    if (bucket === 'byMe' && t.creator?._id  !== userId) return false;
+    if (bucket === 'toMe' && getAssigneeId(t) !== currentUserId) return false;
+    if (bucket === 'byMe' && getCreatorId(t) !== currentUserId) return false;
 
     /* status filter */
     if (status !== 'All' && t.status !== status) return false;
@@ -195,6 +204,7 @@ export default function Dashboard() {
                 ) : (
                   <Grid container spacing={2}>
                     {filtered.map((t) => {
+                      const taskId = getTaskId(t);
                       // Color for status
                       let statusColor = '#b0c4de';
                       if (t.status === 'ToDo') statusColor = '#e3f0ff';
@@ -202,7 +212,7 @@ export default function Dashboard() {
                       if (t.status === 'Done') statusColor = '#e3ffe7';
                       // Border color for expanded
                       let borderColor = 'none';
-                      if (openId === t._id) {
+                      if (openId === taskId) {
                         if (t.status === 'ToDo') borderColor = '#1976d2';
                         if (t.status === 'In Progress') borderColor = '#fbc02d';
                         if (t.status === 'Done') borderColor = '#388e3c';
@@ -210,7 +220,7 @@ export default function Dashboard() {
                       // Deadline highlight for date chip
                       const isDeadlineSoon = t.dueDate && (new Date(t.dueDate) - now < three) && (new Date(t.dueDate) - now > 0);
                       return (
-                        <Grid item xs={12} key={t._id}>
+                        <Grid item xs={12} key={taskId || `${t.title}-${t.dueDate || 'no-date'}`}>
                           <Fade in timeout={500}>
                             <Paper
                               elevation={2}
@@ -222,7 +232,7 @@ export default function Dashboard() {
                                 transition: 'box-shadow 0.3s, border 0.3s',
                                 cursor: 'pointer',
                               }}
-                              onClick={() => setOpenId(openId === t._id ? null : t._id)}
+                              onClick={() => setOpenId(openId === taskId ? null : taskId)}
                             >
                               <Box display="flex" alignItems="center" justifyContent="space-between">
                                 <Box>
@@ -234,7 +244,7 @@ export default function Dashboard() {
                                       size="small"
                                     />
                                     <Chip
-                                      label={bucket === 'toMe' ? `from ${t.creator?.name || 'unknown'}` : `to ${t.assignee?.name || 'unassigned'}`}
+                                      label={bucket === 'toMe' ? `from ${getCreatorName(t)}` : `to ${getAssigneeName(t)}`}
                                       size="small"
                                       sx={{ bgcolor: '#e3ecfa', color: '#205081' }}
                                     />
@@ -251,9 +261,9 @@ export default function Dashboard() {
                                 </IconButton>
                               </Box>
                               {/* Description */}
-                              <Fade in={openId === t._id} unmountOnExit>
+                              <Fade in={openId === taskId} unmountOnExit>
                                 <Box mt={1} ml={1} sx={{ whiteSpace: 'pre-wrap' }}>
-                                  {openId === t._id && (t.description || '— no description —')}
+                                  {openId === taskId && (t.description || '— no description —')}
                                 </Box>
                               </Fade>
                             </Paper>

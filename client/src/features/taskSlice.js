@@ -31,7 +31,10 @@ const taskSlice = createSlice({
     state.list.push(action.payload);
   })
   .addCase(updateTask.fulfilled, (state, action) => {
-    const i = state.list.findIndex(t => t._id === action.payload._id);
+    const updatedId = action.payload?._id ?? action.payload?.id;
+    const i = state.list.findIndex(
+      (t) => (t?._id ?? t?.id) === updatedId
+    );
     if (i !== -1) state.list[i] = action.payload;
   });
 

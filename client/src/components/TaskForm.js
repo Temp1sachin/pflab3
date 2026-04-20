@@ -15,14 +15,26 @@ import {
 export default function TaskForm({ task = null, onClose }) {
   const dispatch = useDispatch();
   const users = useSelector((s) => s.users.list);
+  const getId = (obj) => obj?._id ?? obj?.id ?? '';
+  const assigneeOptions = users
+    .map((u) => ({ id: String(getId(u)), name: u.name || 'Unknown' }))
+    .filter((u) => u.id);
 
   /* ───────── form state ───────── */
   const [form, setForm] = useState(
     task
       ? {
-          ...task,
-          assignee: task.assignee?._id || '',
-          dueDate: task.dueDate ? task.dueDate.slice(0, 10) : '',
+          title: task.title || '',
+          description: task.description || '',
+          dueDate: (task.dueDate || task.due_date || '').slice(0, 10),
+          priority: task.priority || 'Low',
+          status: task.status || 'ToDo',
+          assignee:
+            getId(task.assignee) ||
+            task.assigneeId ||
+            task.assignee_id ||
+            task.assignee ||
+            '',
         }
       : {
           title: '',
@@ -40,8 +52,13 @@ export default function TaskForm({ task = null, onClose }) {
   }, [users.length, dispatch]);
 
   /* ───────── handlers ───────── */
-  const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: name === 'assignee' ? String(value) : value,
+    }));
+  };
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -51,10 +68,19 @@ export default function TaskForm({ task = null, onClose }) {
       return alert('Title, Due Date, and Assignee are required.');
     }
 
+    const payload = {
+      title: form.title,
+      description: form.description,
+      dueDate: form.dueDate,
+      priority: form.priority,
+      assignee: String(form.assignee),
+      status: form.status,
+    };
+
     if (task) {
-      await dispatch(updateTask({ id: task._id, data: form }));
+      await dispatch(updateTask({ id: task._id || task.id, data: payload }));
     } else {
-      await dispatch(addTask(form));
+      await dispatch(addTask(payload));
     }
 
     /* refresh list so Dashboard shows latest */
@@ -135,14 +161,19 @@ export default function TaskForm({ task = null, onClose }) {
             <Select
               labelId="assignee-label"
               name="assignee"
-              value={form.assignee}
+              value={String(form.assignee || '')}
               label="Assignee"
               onChange={handleChange}
+              renderValue={(selected) => {
+                if (!selected) return '-- Assign to --';
+                const found = assigneeOptions.find((u) => u.id === String(selected));
+                return found?.name || '-- Assign to --';
+              }}
               required
             >
               <MenuItem value="">-- Assign to --</MenuItem>
-              {users.map((u) => (
-                <MenuItem key={u._id} value={u._id}>
+              {assigneeOptions.map((u) => (
+                <MenuItem key={u.id} value={u.id}>
                   {u.name}
                 </MenuItem>
               ))}

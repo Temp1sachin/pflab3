@@ -63,13 +63,26 @@ const Task = {
 
   // update task
   async update(id, data) {
+    const keyMap = {
+      title: "title",
+      description: "description",
+      dueDate: "due_date",
+      priority: "priority",
+      status: "status",
+      assignee: "assignee_id",
+    };
+
     const fields = [];
     const values = [];
 
     for (const key in data) {
-      fields.push(`${key} = ?`);
+      const column = keyMap[key];
+      if (!column) continue;
+      fields.push(`${column} = ?`);
       values.push(data[key]);
     }
+
+    if (!fields.length) return;
 
     values.push(id);
 

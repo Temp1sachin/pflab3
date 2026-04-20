@@ -1,123 +1,161 @@
 # Teams ToDo
 
-A collaborative Teams ToDo app where users can create, assign, and manage tasks within a team. Inspired by JIRA, this app features a modern Kanban board, filters, and a responsive, intuitive UI.
+A team task manager with authentication, list view, and kanban board.
 
-## 🚀 Features
+## Tech Stack
 
-- **Authentication:** Signup & Login with email and password
-- **User Dashboard:**
-  - View tasks assigned to you and tasks you’ve assigned to others
-  - Filter by status (ToDo, In Progress, Done) and deadline (approaching in 3 days)
-- **Task Management:**
-  - Create, edit, and assign tasks
-  - Fields: Title, Description, Due Date, Priority, Assignee, Status
-  - Form validations
-- **Kanban Board:**
-  - Drag-and-drop tasks between columns (ToDo, In Progress, Done)
-  - Visual cues for deadlines and priorities
-- **Responsive Design:** Works beautifully on desktop and mobile
+- Frontend: React, Redux, MUI
+- Backend: Node.js, Express
+- Database: MySQL
+- Containerization: Docker, Docker Compose
 
----
+## Project Structure
 
-## 🛠️ Tech Stack
+- client: React app
+- server: Express API + MySQL queries
+- docker-compose.yml: runs db, server, and client together
 
-* **Frontend:** React.js, Redux, Material-UI (MUI)
-* **Backend:** Node.js, Express.js
-* **Database:** MySQL (Local)
+## Environment File (.env)
 
----
-
-## 📦 Getting Started
-
-### 1️⃣ Clone the repository
-
-```bash
-git clone https://github.com/Temp1sachin/pflab3.git
-cd Project
-```
-
----
-
-### 2️⃣ Setup the Database (MySQL)
-
-Make sure **MySQL is installed and running**.
-
-#### Create DB & tables (one command)
-
-```powershell
-cd server
-mysql -u root -p --execute="source setup.sql"
-```
-
-✔ This creates:
-
-* `todo_app` database
-* `users` table
-* `tasks` table
-
----
-
-### 3️⃣ Setup the Server (Backend)
-
-```bash
-cd server
-npm install
-```
-
-#### Create `.env` file inside `server/`
+Create a file named .env in the project root (same folder as docker-compose.yml):
 
 ```env
-PORT=5001
-
-
-DB_PASSWORD=your_mysql_password
-
-
-JWT_SECRET=super_secret_jwt_key_change_this
-
+DB_PASSWORD=your_mysql_root_password
+JWT_SECRET=your_strong_jwt_secret
 ```
 
-#### Start the backend
+### Create .env quickly
+
+PowerShell:
+
+```powershell
+@"
+DB_PASSWORD=your_mysql_root_password
+JWT_SECRET=your_strong_jwt_secret
+"@ | Set-Content .env
+```
+
+macOS/Linux:
 
 ```bash
-npm run dev
+cat > .env <<EOF
+DB_PASSWORD=your_mysql_root_password
+JWT_SECRET=your_strong_jwt_secret
+EOF
 ```
 
-Expected output:
+## Run With Docker Compose (Recommended)
 
-```txt
-✅ MySQL connected
-🚀 Server running on port 5001
+Run commands from project root.
+
+### Start (build + run)
+
+PowerShell:
+
+```powershell
+docker compose up -d --build
 ```
 
----
-
-### 4️⃣ Setup the Client (Frontend)
+macOS/Linux:
 
 ```bash
-cd ../client
-npm install
+docker compose up -d --build
 ```
 
-#### Start the frontend
+### Check containers
+
+PowerShell:
+
+```powershell
+docker compose ps
+```
+
+macOS/Linux:
 
 ```bash
-npm run dev
+docker compose ps
 ```
 
-The client will run on
-👉 **[http://localhost:3000](http://localhost:3000)**
+### View logs
 
----
+PowerShell:
 
+```powershell
+docker compose logs -f
+```
 
+macOS/Linux:
 
+```bash
+docker compose logs -f
+```
 
+### Stop containers
 
+PowerShell:
 
-## 📄 Assignment Notes
+```powershell
+docker compose down
+```
 
-- All registered users are considered team members.
-- UI/UX is inspired by JIRA, with a focus on clarity and ease of use.
-- Deadline approaching tasks are visually highlighted.
-- Fully responsive and mobile-friendly.
+macOS/Linux:
+
+```bash
+docker compose down
+```
+
+### Full reset (remove volumes)
+
+PowerShell:
+
+```powershell
+docker compose down -v
+```
+
+macOS/Linux:
+
+```bash
+docker compose down -v
+```
+
+## Dockerfile Commands (Manual)
+
+Use these only if you want to run without docker-compose.
+
+### Server image and container
+
+PowerShell:
+
+```powershell
+docker build -t todo-server ./server
+docker run --name todo_server -p 5001:5001 --env PORT=5001 --env DB_HOST=host.docker.internal --env DB_USER=root --env DB_PASSWORD=your_mysql_root_password --env DB_NAME=todo_app --env JWT_SECRET=your_strong_jwt_secret todo-server
+```
+
+macOS/Linux:
+
+```bash
+docker build -t todo-server ./server
+docker run --name todo_server -p 5001:5001 -e PORT=5001 -e DB_HOST=host.docker.internal -e DB_USER=root -e DB_PASSWORD=your_mysql_root_password -e DB_NAME=todo_app -e JWT_SECRET=your_strong_jwt_secret todo-server
+```
+
+### Client image and container
+
+PowerShell:
+
+```powershell
+docker build -t todo-client ./client
+docker run --name todo_client -p 3000:3000 --env REACT_APP_API_URL=http://localhost:5001 todo-client
+```
+
+macOS/Linux:
+
+```bash
+docker build -t todo-client ./client
+docker run --name todo_client -p 3000:3000 -e REACT_APP_API_URL=http://localhost:5001 todo-client
+```
+
+## URLs
+
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:5001
+- MySQL Host Port: localhost:3307
